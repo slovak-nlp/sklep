@@ -292,7 +292,6 @@ for SEED_VALUE in $SEEDS; do
       --logging_steps 100 \
       --save_steps 30000 \
       --max_seq_length 512 \
-      --trust_remote_code True \
       --fp16
   done
 done
