@@ -34,6 +34,9 @@ if [ "$#" -eq 0 ]; then
   print_help
 fi
 
+# Python command
+RUN_PYTHON="python"
+
 # Reporting to
 OUT_DIR=outdir
 TASKS_ARG=all
@@ -99,7 +102,8 @@ declare -A TASK_EPOCHS
 declare -A TASK_DROPOUT
 declare -A TASK_WARMUP
 
-COMMAND[qa]="python scripts/run_qa.py
+
+COMMAND[qa]="$RUN_PYTHON scripts/run_qa.py
     --learning_rate 5e-5 \
     --num_train_epochs 2 \
     --dropout 0.0 \
@@ -110,7 +114,7 @@ TASK_EPOCHS[qa]=2
 TASK_DROPOUT[qa]=0
 TASK_WARMUP[qa]=0.3
 
-COMMAND[sts]="python scripts/run_glue.py \
+COMMAND[sts]="$RUN_PYTHON scripts/run_glue.py \
   --dataset_config sts \
   --task_name stsb \
 "
@@ -119,7 +123,7 @@ TASK_EPOCHS[sts]=3
 TASK_DROPOUT[sts]=0
 TASK_WARMUP[sts]=0
 
-COMMAND[nli]="python scripts/run_glue.py \
+COMMAND[nli]="$RUN_PYTHON scripts/run_glue.py \
   --dataset_config nli \
   --task_name mnli \
 "
@@ -128,7 +132,7 @@ TASK_EPOCHS[nli]=3
 TASK_DROPOUT[nli]=0
 TASK_WARMUP[nli]=0.3
 
-COMMAND[rte]="python scripts/run_glue.py \
+COMMAND[rte]="$RUN_PYTHON scripts/run_glue.py \
   --dataset_config rte \
   --task_name rte \
 "
@@ -137,7 +141,7 @@ TASK_EPOCHS[rte]=5
 TASK_DROPOUT[rte]=0.1
 TASK_WARMUP[rte]=0.1
 
-COMMAND[hate]="python scripts/run_classification.py
+COMMAND[hate]="$RUN_PYTHON scripts/run_classification.py
   --dataset_config hate-speech \
   --metric_name accuracy \
   --text_column_name text \
@@ -147,7 +151,7 @@ TASK_EPOCHS[hate]=4
 TASK_DROPOUT[hate]=0.0
 TASK_WARMUP[hate]=0.1
 
-COMMAND[sentiment]="python scripts/run_classification.py \
+COMMAND[sentiment]="$RUN_PYTHON scripts/run_classification.py \
   --dataset_config sentiment-analysis \
   --metric_name accuracy \
   --text_column_name text
@@ -158,7 +162,7 @@ TASK_EPOCHS[sentiment]=3
 TASK_DROPOUT[sentiment]=0.0
 TASK_WARMUP[sentiment]=0.0
 
-COMMAND[uner]="python scripts/run_ner.py \
+COMMAND[uner]="$RUN_PYTHON scripts/run_ner.py \
   --dataset_config ner-uner \
   --text_column_name tokens \
   --label_column_name ner_tags \
@@ -169,7 +173,7 @@ TASK_EPOCHS[uner]=6
 TASK_DROPOUT[uner]=0.0
 TASK_WARMUP[uner]=0.1
 
-COMMAND[wikigold]="python scripts/run_ner.py \
+COMMAND[wikigold]="$RUN_PYTHON scripts/run_ner.py \
   --dataset_config ner-wikigoldsk \
   --text_column_name tokens \
   --label_column_name ner_tags \
@@ -180,7 +184,7 @@ TASK_EPOCHS[wikigold]=6
 TASK_DROPOUT[wikigold]=0.0
 TASK_WARMUP[wikigold]=0.1
 
-COMMAND[pos]="python scripts/run_ner.py \
+COMMAND[pos]="$RUN_PYTHON scripts/run_ner.py \
   --dataset_config pos \
   --text_column_name tokens \
   --label_column_name pos_tags \
@@ -288,8 +292,8 @@ for SEED_VALUE in $SEEDS; do
       --logging_steps 100 \
       --save_steps 30000 \
       --max_seq_length 512 \
-      --fp16 \
-      --trust_remote_code True
+      --trust_remote_code True \
+      --fp16
   done
 done
 
