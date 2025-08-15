@@ -99,7 +99,14 @@ declare -A TASK_EPOCHS
 declare -A TASK_DROPOUT
 declare -A TASK_WARMUP
 
-COMMAND[qa]="python scripts/run_qa.py
+# Check if "eval/" is in the current path
+if [[ "$PWD" == *"eval/"* ]]; then
+    PREFIX=""
+else
+    PREFIX="eval/"
+fi
+
+COMMAND[qa]="python ${PREFIX}scripts/run_qa.py
     --learning_rate 5e-5 \
     --num_train_epochs 2 \
     --dropout 0.0 \
@@ -110,7 +117,7 @@ TASK_EPOCHS[qa]=2
 TASK_DROPOUT[qa]=0
 TASK_WARMUP[qa]=0.3
 
-COMMAND[sts]="python scripts/run_glue.py \
+COMMAND[sts]="python ${PREFIX}scripts/run_glue.py \
   --dataset_config sts \
   --task_name stsb \
 "
@@ -119,7 +126,7 @@ TASK_EPOCHS[sts]=3
 TASK_DROPOUT[sts]=0
 TASK_WARMUP[sts]=0
 
-COMMAND[nli]="python scripts/run_glue.py \
+COMMAND[nli]="python ${PREFIX}scripts/run_glue.py \
   --dataset_config nli \
   --task_name mnli \
 "
@@ -128,7 +135,7 @@ TASK_EPOCHS[nli]=3
 TASK_DROPOUT[nli]=0
 TASK_WARMUP[nli]=0.3
 
-COMMAND[rte]="python scripts/run_glue.py \
+COMMAND[rte]="python ${PREFIX}scripts/run_glue.py \
   --dataset_config rte \
   --task_name rte \
 "
@@ -137,7 +144,7 @@ TASK_EPOCHS[rte]=5
 TASK_DROPOUT[rte]=0.1
 TASK_WARMUP[rte]=0.1
 
-COMMAND[hate]="python scripts/run_classification.py
+COMMAND[hate]="python ${PREFIX}scripts/run_classification.py
   --dataset_config hate-speech \
   --metric_name accuracy \
   --text_column_name text \
@@ -147,7 +154,7 @@ TASK_EPOCHS[hate]=4
 TASK_DROPOUT[hate]=0.0
 TASK_WARMUP[hate]=0.1
 
-COMMAND[sentiment]="python scripts/run_classification.py \
+COMMAND[sentiment]="python ${PREFIX}scripts/run_classification.py \
   --dataset_config sentiment-analysis \
   --metric_name accuracy \
   --text_column_name text
@@ -158,7 +165,7 @@ TASK_EPOCHS[sentiment]=3
 TASK_DROPOUT[sentiment]=0.0
 TASK_WARMUP[sentiment]=0.0
 
-COMMAND[uner]="python scripts/run_ner.py \
+COMMAND[uner]="python ${PREFIX}scripts/run_ner.py \
   --dataset_config ner-uner \
   --text_column_name tokens \
   --label_column_name ner_tags \
@@ -169,7 +176,7 @@ TASK_EPOCHS[uner]=6
 TASK_DROPOUT[uner]=0.0
 TASK_WARMUP[uner]=0.1
 
-COMMAND[wikigold]="python scripts/run_ner.py \
+COMMAND[wikigold]="python ${PREFIX}scripts/run_ner.py \
   --dataset_config ner-wikigoldsk \
   --text_column_name tokens \
   --label_column_name ner_tags \
@@ -180,7 +187,7 @@ TASK_EPOCHS[wikigold]=6
 TASK_DROPOUT[wikigold]=0.0
 TASK_WARMUP[wikigold]=0.1
 
-COMMAND[pos]="python scripts/run_ner.py \
+COMMAND[pos]="python ${PREFIX}scripts/run_ner.py \
   --dataset_config pos \
   --text_column_name tokens \
   --label_column_name pos_tags \
