@@ -41,7 +41,8 @@ The script can be run with various arguments to customize the evaluation:
 To run all tasks with the `gerulata/slovakbert` model, use the following command:
 
 ```bash
-./eval/sklep_run.sh \
+cd eval
+sklep_run.sh \
     --tasks=all \
     --model_name=gerulata/slovakbert
 ```
