@@ -70,6 +70,11 @@ if [[ "$TASKS_ARG" != 'all' ]]; then
 fi
 echo Running $TASKS
 
+# Disable WandB
+if [ -z "$WANDB_PROJECT" ]; then
+  export WANDB_DISABLED=true
+fi
+
 # Print CUDA card
 # TODO run_glue.py allocates all cards if this variable is not set, but uses only one
 if [ -z "$CUDA_VISIBLE_DEVICES" ]; then
