@@ -6,6 +6,8 @@ skLEP is a GLUE-style benchmark for evaluating Slovak natural language understan
 
 ![skLEP RER heatmap](images/sklep-rer-heatmap.png)
 
+Find more in the paper and explore the full results: https://aclanthology.org/2025.findings-acl.1371/
+
 ## Dataset
 
 The skLEP dataset is available on Hugging Face: 🤗 [slovak-nlp/sklep](https://huggingface.co/datasets/slovak-nlp/sklep)
