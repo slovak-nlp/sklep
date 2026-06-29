@@ -32,10 +32,12 @@ print_help() {
 }
 if [ "$#" -eq 0 ]; then
   print_help
+  exit 0
 fi
 
 # Python command
 RUN_PYTHON="python"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Reporting to
 OUT_DIR=outdir
@@ -51,7 +53,10 @@ while [[ "$#" -gt 0 ]]; do
   --out_dir=*) OUT_DIR="${1#*=}" ;;
   --wandb=*) export WANDB_PROJECT="${1#*=}" ;;
   --cuda=*) export CUDA_VISIBLE_DEVICES="${1#*=}" ;;
-  --help) print_help ;;
+  --help)
+    print_help
+    exit 0
+    ;;
   --sweep) SWEEP=1 ;;
   --num_train_epochs=*) NUM_TRAIN_EPOCHS_ARG="${1#*=}" ;;
   --warmup_ratio=*) WARMUP_RATIO_ARG="${1#*=}" ;;
@@ -66,7 +71,7 @@ done
 TASKS=$ALL_TASKS
 if [[ "$TASKS_ARG" != 'all' ]]; then
   # split according to ,
-  TASKS=${TASKS_ARG/,/ }
+  TASKS=${TASKS_ARG//,/ }
 fi
 echo Running $TASKS
 
@@ -108,7 +113,7 @@ declare -A TASK_DROPOUT
 declare -A TASK_WARMUP
 
 
-COMMAND[qa]="$RUN_PYTHON scripts/run_qa.py
+COMMAND[qa]="$RUN_PYTHON $SCRIPT_DIR/scripts/run_qa.py
     --learning_rate 5e-5 \
     --num_train_epochs 2 \
     --dropout 0.0 \
@@ -119,8 +124,8 @@ TASK_EPOCHS[qa]=2
 TASK_DROPOUT[qa]=0
 TASK_WARMUP[qa]=0.3
 
-COMMAND[sts]="$RUN_PYTHON scripts/run_glue.py \
-  --dataset_config sts \
+COMMAND[sts]="$RUN_PYTHON $SCRIPT_DIR/scripts/run_glue.py \
+  --dataset_config_name sts \
   --task_name stsb \
 "
 TASK_LR[sts]=5e-5
@@ -128,8 +133,8 @@ TASK_EPOCHS[sts]=3
 TASK_DROPOUT[sts]=0
 TASK_WARMUP[sts]=0
 
-COMMAND[nli]="$RUN_PYTHON scripts/run_glue.py \
-  --dataset_config nli \
+COMMAND[nli]="$RUN_PYTHON $SCRIPT_DIR/scripts/run_glue.py \
+  --dataset_config_name nli \
   --task_name mnli \
 "
 TASK_LR[nli]=1e-5
@@ -137,8 +142,8 @@ TASK_EPOCHS[nli]=3
 TASK_DROPOUT[nli]=0
 TASK_WARMUP[nli]=0.3
 
-COMMAND[rte]="$RUN_PYTHON scripts/run_glue.py \
-  --dataset_config rte \
+COMMAND[rte]="$RUN_PYTHON $SCRIPT_DIR/scripts/run_glue.py \
+  --dataset_config_name rte \
   --task_name rte \
 "
 TASK_LR[rte]=2e-5
@@ -146,20 +151,20 @@ TASK_EPOCHS[rte]=5
 TASK_DROPOUT[rte]=0.1
 TASK_WARMUP[rte]=0.1
 
-COMMAND[hate]="$RUN_PYTHON scripts/run_classification.py
-  --dataset_config hate-speech \
+COMMAND[hate]="$RUN_PYTHON $SCRIPT_DIR/scripts/run_classification.py
+  --dataset_config_name hate-speech \
   --metric_name accuracy \
-  --text_column_name text \
+  --text_column_names text \
 "
 TASK_LR[hate]=5e-5
 TASK_EPOCHS[hate]=4
 TASK_DROPOUT[hate]=0.0
 TASK_WARMUP[hate]=0.1
 
-COMMAND[sentiment]="$RUN_PYTHON scripts/run_classification.py \
-  --dataset_config sentiment-analysis \
+COMMAND[sentiment]="$RUN_PYTHON $SCRIPT_DIR/scripts/run_classification.py \
+  --dataset_config_name sentiment-analysis \
   --metric_name accuracy \
-  --text_column_name text
+  --text_column_names text
 "
 
 TASK_LR[sentiment]=5e-5
@@ -167,8 +172,8 @@ TASK_EPOCHS[sentiment]=3
 TASK_DROPOUT[sentiment]=0.0
 TASK_WARMUP[sentiment]=0.0
 
-COMMAND[uner]="$RUN_PYTHON scripts/run_ner.py \
-  --dataset_config ner-uner \
+COMMAND[uner]="$RUN_PYTHON $SCRIPT_DIR/scripts/run_ner.py \
+  --dataset_config_name ner-uner \
   --text_column_name tokens \
   --label_column_name ner_tags \
 "
@@ -178,8 +183,8 @@ TASK_EPOCHS[uner]=6
 TASK_DROPOUT[uner]=0.0
 TASK_WARMUP[uner]=0.1
 
-COMMAND[wikigold]="$RUN_PYTHON scripts/run_ner.py \
-  --dataset_config ner-wikigoldsk \
+COMMAND[wikigold]="$RUN_PYTHON $SCRIPT_DIR/scripts/run_ner.py \
+  --dataset_config_name ner-wikigoldsk \
   --text_column_name tokens \
   --label_column_name ner_tags \
 "
@@ -189,8 +194,8 @@ TASK_EPOCHS[wikigold]=6
 TASK_DROPOUT[wikigold]=0.0
 TASK_WARMUP[wikigold]=0.1
 
-COMMAND[pos]="$RUN_PYTHON scripts/run_ner.py \
-  --dataset_config pos \
+COMMAND[pos]="$RUN_PYTHON $SCRIPT_DIR/scripts/run_ner.py \
+  --dataset_config_name pos \
   --text_column_name tokens \
   --label_column_name pos_tags \
 "
@@ -257,8 +262,8 @@ for SEED_VALUE in $SEEDS; do
     if [ -n "$SWEEP" ]; then
       # sweep is set
       # Set sweep args and output dir
-      OUT="$OUT-E:$NUM_TRAIN_EPOCHS--W:$WARMUP_RATIO--LR:$LEARNING_RATE--D:$DROPOUT"
-      RUN_NAME="$TASK_NAME--$MODEL_NAME--E:$NUM_TRAIN_EPOCHS--W:$WARMUP_RATIO--LR:$LEARNING_RATE--D:$DROPOUT--$DATESTRING"
+      OUT="$OUT-E:$NUM_TRAIN_EPOCHS--W:$WARMUP--LR:$LEARNING_RATE--D:$DROPOUT"
+      RUN_NAME="$TASK_NAME--$MODEL_NAME--E:$NUM_TRAIN_EPOCHS--W:$WARMUP--LR:$LEARNING_RATE--D:$DROPOUT--$DATESTRING"
     fi
     # prepare common args
     LAUNCH_ARGS="--model_name_or_path $MODEL_NAME \
