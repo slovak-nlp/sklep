@@ -36,9 +36,15 @@ export HF_HUB_OFFLINE=1
 MODEL_NAME="${MODEL_NAME:-jhu-clsp/mmBERT-base}"
 export RUN_PYTHON="$REPO_ROOT/.venv-devana/bin/python3"
 
+# SEEDS unset -> sklep_run.sh's own default (the paper's 3-seed protocol: 12 42 99)
+SEEDS_FLAG=""
+if [ -n "$SEEDS" ]; then
+  SEEDS_FLAG="--seeds=$SEEDS"
+fi
+
 ./eval/sklep_run.sh \
   --tasks=all \
   --model_name="$MODEL_NAME" \
-  --seeds=42 \
+  $SEEDS_FLAG \
   --wandb=sklep-mmbert \
   --out_dir=outdir-devana
