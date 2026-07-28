@@ -18,5 +18,8 @@ wheels/
 # HPC-side caches
 .hf-cache
 
+# WandB cache
+wandb/
+
 # IDE
 .idea/
