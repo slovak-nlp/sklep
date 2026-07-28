@@ -33,10 +33,13 @@ from huggingface_hub import snapshot_download
 snapshot_download('$M')
 "
 done
-.venv-devana/bin/python3 -c "
+DATASET_CONFIGS=(hate-speech sentiment-analysis ner-wikigoldsk ner-uner pos question-answering rte nli sts)
+for C in "${DATASET_CONFIGS[@]}"; do
+  .venv-devana/bin/python3 -c "
 from datasets import load_dataset
-load_dataset('slovak-nlp/sklep')
+load_dataset('slovak-nlp/sklep', '$C')
 "
+done
 
 echo
 echo "Setup complete. Before submitting jobs:"
