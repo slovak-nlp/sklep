@@ -21,6 +21,7 @@ print_help() {
   echo --out_dir=[path] Output location where models and logs are saved
   echo --wandb=\<project\> Name of WANDB project to log
   echo --cuda=[int] CUDA Cards to use. A comma separated list
+  echo --seeds=[int,...] Override the default seed list \(default: 12 42 99, or 42 alone under --sweep\)
   echo --help
   echo
   echo Sweep arguments:
@@ -32,7 +33,11 @@ print_help() {
 }
 if [ "$#" -eq 0 ]; then
   print_help
+  exit 0
 fi
+
+# Python command (override to e.g. "torchrun --nproc_per_node=1" or a singularity wrapper)
+RUN_PYTHON="${RUN_PYTHON:-python}"
 
 # Reporting to
 OUT_DIR=outdir
@@ -48,7 +53,11 @@ while [[ "$#" -gt 0 ]]; do
   --out_dir=*) OUT_DIR="${1#*=}" ;;
   --wandb=*) export WANDB_PROJECT="${1#*=}" ;;
   --cuda=*) export CUDA_VISIBLE_DEVICES="${1#*=}" ;;
-  --help) print_help ;;
+  --seeds=*) SEEDS_ARG="${1#*=}" ;;
+  --help)
+    print_help
+    exit 0
+    ;;
   --sweep) SWEEP=1 ;;
   --num_train_epochs=*) NUM_TRAIN_EPOCHS_ARG="${1#*=}" ;;
   --warmup_ratio=*) WARMUP_RATIO_ARG="${1#*=}" ;;
@@ -63,9 +72,14 @@ done
 TASKS=$ALL_TASKS
 if [[ "$TASKS_ARG" != 'all' ]]; then
   # split according to ,
-  TASKS=${TASKS_ARG/,/ }
+  TASKS=${TASKS_ARG//,/ }
 fi
 echo Running $TASKS
+
+# Disable WandB if no project was given
+if [ -z "$WANDB_PROJECT" ]; then
+  export WANDB_DISABLED=true
+fi
 
 # Print CUDA card
 # TODO run_glue.py allocates all cards if this variable is not set, but uses only one
@@ -102,7 +116,7 @@ declare -A TASK_WARMUP
 # Get the absolute path of the git repo root
 REPO_ROOT="$(git rev-parse --show-toplevel)"
 
-COMMAND[qa]="python ${REPO_ROOT}/eval/scripts/run_qa.py
+COMMAND[qa]="$RUN_PYTHON ${REPO_ROOT}/eval/scripts/run_qa.py
     --learning_rate 5e-5 \
     --num_train_epochs 2 \
     --dropout 0.0 \
@@ -113,8 +127,8 @@ TASK_EPOCHS[qa]=2
 TASK_DROPOUT[qa]=0
 TASK_WARMUP[qa]=0.3
 
-COMMAND[sts]="python ${REPO_ROOT}/eval/scripts/run_glue.py \
-  --dataset_config sts \
+COMMAND[sts]="$RUN_PYTHON ${REPO_ROOT}/eval/scripts/run_glue.py \
+  --dataset_config_name sts \
   --task_name stsb \
 "
 TASK_LR[sts]=5e-5
@@ -122,8 +136,8 @@ TASK_EPOCHS[sts]=3
 TASK_DROPOUT[sts]=0
 TASK_WARMUP[sts]=0
 
-COMMAND[nli]="python ${REPO_ROOT}/eval/scripts/run_glue.py \
-  --dataset_config nli \
+COMMAND[nli]="$RUN_PYTHON ${REPO_ROOT}/eval/scripts/run_glue.py \
+  --dataset_config_name nli \
   --task_name mnli \
 "
 TASK_LR[nli]=1e-5
@@ -131,8 +145,8 @@ TASK_EPOCHS[nli]=3
 TASK_DROPOUT[nli]=0
 TASK_WARMUP[nli]=0.3
 
-COMMAND[rte]="python ${REPO_ROOT}/eval/scripts/run_glue.py \
-  --dataset_config rte \
+COMMAND[rte]="$RUN_PYTHON ${REPO_ROOT}/eval/scripts/run_glue.py \
+  --dataset_config_name rte \
   --task_name rte \
 "
 TASK_LR[rte]=2e-5
@@ -140,20 +154,20 @@ TASK_EPOCHS[rte]=5
 TASK_DROPOUT[rte]=0.1
 TASK_WARMUP[rte]=0.1
 
-COMMAND[hate]="python ${REPO_ROOT}/eval/scripts/run_classification.py
-  --dataset_config hate-speech \
+COMMAND[hate]="$RUN_PYTHON ${REPO_ROOT}/eval/scripts/run_classification.py
+  --dataset_config_name hate-speech \
   --metric_name accuracy \
-  --text_column_name text \
+  --text_column_names text \
 "
 TASK_LR[hate]=5e-5
 TASK_EPOCHS[hate]=4
 TASK_DROPOUT[hate]=0.0
 TASK_WARMUP[hate]=0.1
 
-COMMAND[sentiment]="python ${REPO_ROOT}/eval/scripts/run_classification.py \
-  --dataset_config sentiment-analysis \
+COMMAND[sentiment]="$RUN_PYTHON ${REPO_ROOT}/eval/scripts/run_classification.py \
+  --dataset_config_name sentiment-analysis \
   --metric_name accuracy \
-  --text_column_name text
+  --text_column_names text
 "
 
 TASK_LR[sentiment]=5e-5
@@ -161,8 +175,8 @@ TASK_EPOCHS[sentiment]=3
 TASK_DROPOUT[sentiment]=0.0
 TASK_WARMUP[sentiment]=0.0
 
-COMMAND[uner]="python ${REPO_ROOT}/eval/scripts/run_ner.py \
-  --dataset_config ner-uner \
+COMMAND[uner]="$RUN_PYTHON ${REPO_ROOT}/eval/scripts/run_ner.py \
+  --dataset_config_name ner-uner \
   --text_column_name tokens \
   --label_column_name ner_tags \
 "
@@ -172,8 +186,8 @@ TASK_EPOCHS[uner]=6
 TASK_DROPOUT[uner]=0.0
 TASK_WARMUP[uner]=0.1
 
-COMMAND[wikigold]="python ${REPO_ROOT}/eval/scripts/run_ner.py \
-  --dataset_config ner-wikigoldsk \
+COMMAND[wikigold]="$RUN_PYTHON ${REPO_ROOT}/eval/scripts/run_ner.py \
+  --dataset_config_name ner-wikigoldsk \
   --text_column_name tokens \
   --label_column_name ner_tags \
 "
@@ -183,8 +197,8 @@ TASK_EPOCHS[wikigold]=6
 TASK_DROPOUT[wikigold]=0.0
 TASK_WARMUP[wikigold]=0.1
 
-COMMAND[pos]="python ${REPO_ROOT}/eval/scripts/run_ner.py \
-  --dataset_config pos \
+COMMAND[pos]="$RUN_PYTHON ${REPO_ROOT}/eval/scripts/run_ner.py \
+  --dataset_config_name pos \
   --text_column_name tokens \
   --label_column_name pos_tags \
 "
@@ -217,6 +231,10 @@ SEEDS="12 42 99"
 if [ -n "$SWEEP" ]; then
   # in sweep run use only one seed
   SEEDS="42"
+fi
+if [ -n "$SEEDS_ARG" ]; then
+  # explicit override takes priority
+  SEEDS="${SEEDS_ARG//,/ }"
 fi
 
 # Run all tasks in sequence
@@ -251,8 +269,8 @@ for SEED_VALUE in $SEEDS; do
     if [ -n "$SWEEP" ]; then
       # sweep is set
       # Set sweep args and output dir
-      OUT="$OUT-E:$NUM_TRAIN_EPOCHS--W:$WARMUP_RATIO--LR:$LEARNING_RATE--D:$DROPOUT"
-      RUN_NAME="$TASK_NAME--$MODEL_NAME--E:$NUM_TRAIN_EPOCHS--W:$WARMUP_RATIO--LR:$LEARNING_RATE--D:$DROPOUT--$DATESTRING"
+      OUT="$OUT-E:$NUM_TRAIN_EPOCHS--W:$WARMUP--LR:$LEARNING_RATE--D:$DROPOUT"
+      RUN_NAME="$TASK_NAME--$MODEL_NAME--E:$NUM_TRAIN_EPOCHS--W:$WARMUP--LR:$LEARNING_RATE--D:$DROPOUT--$DATESTRING"
     fi
     # prepare common args
     LAUNCH_ARGS="--model_name_or_path $MODEL_NAME \
@@ -291,9 +309,10 @@ for SEED_VALUE in $SEEDS; do
       --logging_steps 100 \
       --save_steps 30000 \
       --max_seq_length 512 \
-      --fp16 \
-      --trust_remote_code True
+      --fp16
   done
 done
 
-# TODO Call gather script
+echo
+echo "Gathering results..."
+python "${REPO_ROOT}/eval/sklep_gather.py" "$OUT_DIR"
