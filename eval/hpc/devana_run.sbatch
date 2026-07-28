@@ -20,7 +20,13 @@ mkdir -p logs
 
 module purge
 module load Python/3.11.5-GCCcore-13.2.0
-source .venv-devana/bin/activate
+
+# Skip `wandb login` -- this client version's key-length validation rejects
+# on-prem key formats. Reading the key from the env at runtime has no such
+# check, so just source it from a file you created once (see devana_setup.sh).
+if [ -f ~/.config/sklep/wandb.env ]; then
+  source ~/.config/sklep/wandb.env
+fi
 
 # Model + dataset were pre-downloaded into this cache during setup, in case
 # the gpu partition's compute nodes lack outbound internet access.
@@ -28,6 +34,7 @@ export HF_HOME="$REPO_ROOT/.hf-cache"
 export HF_HUB_OFFLINE=1
 
 MODEL_NAME="${MODEL_NAME:-jhu-clsp/mmBERT-base}"
+export RUN_PYTHON="$REPO_ROOT/.venv-devana/bin/python3"
 
 ./eval/sklep_run.sh \
   --tasks=all \
