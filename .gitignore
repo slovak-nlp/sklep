@@ -1,0 +1,22 @@
+eval/outdir
+eval/wandb
+outdir*
+logs/
+
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+.venv-devana
+
+# HPC-side caches
+.hf-cache
+
+# IDE
+.idea/
