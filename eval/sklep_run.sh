@@ -113,8 +113,9 @@ declare -A TASK_EPOCHS
 declare -A TASK_DROPOUT
 declare -A TASK_WARMUP
 
-# Get the absolute path of the git repo root
-REPO_ROOT="$(git rev-parse --show-toplevel)"
+# Get the absolute path of the git repo root (override with REPO_ROOT= where
+# git isn't available, e.g. a SLURM compute node)
+REPO_ROOT="${REPO_ROOT:-$(git rev-parse --show-toplevel)}"
 
 COMMAND[qa]="$RUN_PYTHON ${REPO_ROOT}/eval/scripts/run_qa.py
     --learning_rate 5e-5 \
@@ -315,4 +316,4 @@ done
 
 echo
 echo "Gathering results..."
-python "${REPO_ROOT}/eval/sklep_gather.py" "$OUT_DIR"
+$RUN_PYTHON "${REPO_ROOT}/eval/sklep_gather.py" "$OUT_DIR"

@@ -14,7 +14,9 @@
 # (run eval/hpc/devana_setup.sh once on the login node first)
 
 set -e
-REPO_ROOT="$(git rev-parse --show-toplevel)"
+# git isn't available on compute nodes -- SLURM sets this to the directory
+# `sbatch` was invoked from, which must be the repo root.
+export REPO_ROOT="$SLURM_SUBMIT_DIR"
 cd "$REPO_ROOT"
 mkdir -p logs
 
