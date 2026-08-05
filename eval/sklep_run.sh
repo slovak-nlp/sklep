@@ -76,11 +76,6 @@ if [[ "$TASKS_ARG" != 'all' ]]; then
 fi
 echo Running $TASKS
 
-# Disable WandB if no project was given
-if [ -z "$WANDB_PROJECT" ]; then
-  export WANDB_DISABLED=true
-fi
-
 # Print CUDA card
 # TODO run_glue.py allocates all cards if this variable is not set, but uses only one
 if [ -z "$CUDA_VISIBLE_DEVICES" ]; then
@@ -310,7 +305,8 @@ for SEED_VALUE in $SEEDS; do
       --logging_steps 100 \
       --save_steps 30000 \
       --max_seq_length 512 \
-      --fp16
+      --fp16 \
+      --trust_remote_code True
   done
 done
 
