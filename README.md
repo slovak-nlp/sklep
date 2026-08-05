@@ -19,7 +19,7 @@ This project uses `uv` for environment management. If you don't have `uv` instal
 To create the virtual environment and install the necessary dependencies, run the following command:
 
 ```bash
-uv pip install .
+uv sync
 ```
 
 ## Evaluation
@@ -41,6 +41,7 @@ The script can be run with various arguments to customize the evaluation:
 - `--out_dir`: The directory to save the output logs and models.
 - `--wandb`: The name of the Weights & Biases project to log the results.
 - `--cuda`: A comma-separated list of CUDA devices to use.
+- `--seeds`: A comma-separated list of seeds to override the default (`12,42,99`, matching the paper's 3-seed protocol; `42` alone under `--sweep`).
 
 ### Example
 
@@ -65,6 +66,35 @@ MODEL_NAME=gerulata/slovakbert ./eval/sklep_run.sh \
     --warmup_ratio=0.05 \
     --dropout=0 \
     --wandb=sklep_qa
+```
+
+### Gathering Results
+
+`sklep_run.sh` calls `eval/sklep_gather.py` automatically once all tasks finish, but it can
+also be run manually against any output directory (e.g. to combine results from multiple
+separate runs, such as parallel per-seed jobs submitted to a cluster):
+
+```bash
+python eval/sklep_gather.py outdir
+```
+
+It walks the directory for `eval_results.json` files and prints per-model, per-task, and
+leaderboard markdown tables, with each task's Relative Error Reduction (RER) against the
+reference values published in the paper.
+
+## Running on Devana (HPC)
+
+Scripts for running the benchmark on the [Devana](https://userdocs.hpc.sav.sk/) cluster via
+SLURM are in `eval/hpc/`:
+
+- `devana_setup.sh`: one-time login-node setup — installs `uv`, builds the virtual
+  environment, and pre-downloads models/datasets into a local Hugging Face cache (in case
+  the `gpu` partition's compute nodes lack outbound internet access).
+- `devana_run.sbatch`: submits a job on a single A100. Set `MODEL_NAME` and optionally
+  `SEEDS` as environment variables, and pass your project account:
+
+```bash
+MODEL_NAME=jhu-clsp/mmBERT-base SEEDS=42 sbatch --account=<your-account> eval/hpc/devana_run.sbatch
 ```
 
 ## License
