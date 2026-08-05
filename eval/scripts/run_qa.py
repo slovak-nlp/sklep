@@ -305,6 +305,7 @@ def main():
             data_args.dataset_config_name,
             cache_dir=model_args.cache_dir,
             token=model_args.token,
+            trust_remote_code=model_args.trust_remote_code,
         )
     else:
         data_files = {}
